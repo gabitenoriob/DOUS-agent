@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    
+        <script>
+            L_NO_TOUCH = false;
+            L_DISABLE_3D = false;
+        </script>
+    
+    <style>html, body {width: 100%;height: 100%;margin: 0;padding: 0;}</style>
+    <style>#map {position:absolute;top:0;bottom:0;right:0;left:0;}</style>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_062ed430fa7b45e4d29d4e8322dbf992 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+        
+    <script src="https://cdn.jsdelivr.net/gh/python-visualization/folium@main/folium/templates/leaflet_heat.min.js"></script>
+</head>
+<body>
+    
+    
+            <div class="folium-map" id="map_062ed430fa7b45e4d29d4e8322dbf992" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_062ed430fa7b45e4d29d4e8322dbf992 = L.map(
+                "map_062ed430fa7b45e4d29d4e8322dbf992",
+                {
+                    center: [-10.184204543960227, -36.83759007555731],
+                    crs: L.CRS.EPSG3857,
+                    zoom: 10,
+                    zoomControl: true,
+                    preferCanvas: false,
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_6a8f1ff00154e36ac75f56748a6f05da = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {"attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors", "detectRetina": false, "maxNativeZoom": 19, "maxZoom": 19, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
+            );
+        
+    
+            tile_layer_6a8f1ff00154e36ac75f56748a6f05da.addTo(map_062ed430fa7b45e4d29d4e8322dbf992);
+        
+    
+            var heat_map_e9d337adaa281644e077dbbafcb8a09e = L.heatLayer(
+                [[-10.184203896673733, -36.83779616994944], [-10.184203896673733, -36.83779616994944], [-10.184203896673733, -36.83779616994944], [-10.1843483, -36.8364861], [-10.181357125673122, -36.838766027024946], [-10.181648899999999, -36.837781199999995], [-10.182650952977307, -36.8346585575575], [-10.188102667931894, -36.83655194283082], [-10.188960570837203, -36.836607698525874], [-10.188960570837203, -36.836607698525874], [-10.18200609773501, -36.839274415977215], [-10.18200609773501, -36.839274415977215], [-10.18200609773501, -36.839274415977215]],
+                {"blur": 15, "maxZoom": 18, "minOpacity": 0.5, "radius": 25}
+            );
+        
+    
+            heat_map_e9d337adaa281644e077dbbafcb8a09e.addTo(map_062ed430fa7b45e4d29d4e8322dbf992);
+        
+    
+            var marker_9b3722fedeb5b64eccd0bafbc1905769 = L.marker(
+                [-10.184203896673733, -36.83779616994944],
+                {}
+            ).addTo(map_062ed430fa7b45e4d29d4e8322dbf992);
+        
+    
+            var icon_c0f5396eab9f183bfb5228c1804ca660 = L.AwesomeMarkers.icon(
+                {"extraClasses": "fa-rotate-0", "icon": "info-sign", "iconColor": "white", "markerColor": "blue", "prefix": "glyphicon"}
+            );
+            marker_9b3722fedeb5b64eccd0bafbc1905769.setIcon(icon_c0f5396eab9f183bfb5228c1804ca660);
+        
+    
+        var popup_1593d243d8aff52b20bbfafc5126721d = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_1aeaa82b734e1d29ae6cba6489392902 = $(`<div id="html_1aeaa82b734e1d29ae6cba6489392902" style="width: 100.0%; height: 100.0%;">RUA PAJE MANOEL BALTAZAR, 0 SN, Porto Real do Colégio, 57290000</div>`)[0];
+                popup_1593d243d8aff52b20bbfafc5126721d.setContent(html_1aeaa82b734e1d29ae6cba6489392902);
+            
+        
+
+        marker_9b3722fedeb5b64eccd0bafbc1905769.bindPopup(popup_1593d243d8aff52b20bbfafc5126721d)
+        ;
+
+        
+    
+    
+            var marker_44a836e2aec8f14989c33e679535dbce = L.marker(
+                [-10.184203896673733, -36.83779616994944],
+                {}
+            ).addTo(map_062ed430fa7b45e4d29d4e8322dbf992);
+        
+    
+            var icon_13dcf635c314514ee8fb28027d0dd07b = L.AwesomeMarkers.icon(
+                {"extraClasses": "fa-rotate-0", "icon": "info-sign", "iconColor": "white", "markerColor": "blue", "prefix": "glyphicon"}
+            );
+            marker_44a836e2aec8f14989c33e679535dbce.setIcon(icon_13dcf635c314514ee8fb28027d0dd07b);
+        
+    
+        var popup_476fb658bf387fb237ede7a273664b42 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_873399cbda3226170d49ae8d3709aad9 = $(`<div id="html_873399cbda3226170d49ae8d3709aad9" style="width: 100.0%; height: 100.0%;">RUA PAJE MANOEL BALTAZAR, 0 SN, Porto Real do Colégio, 57290000</div>`)[0];
+                popup_476fb658bf387fb237ede7a273664b42.setContent(html_873399cbda3226170d49ae8d3709aad9);
+            
+        
+
+        marker_44a836e2aec8f14989c33e679535dbce.bindPopup(popup_476fb658bf387fb237ede7a273664b42)
+        ;
+
+        
+    
+    
+            var marker_bb008bfe26af29aeefe1b86c6e4a9da3 = L.marker(
+                [-10.184203896673733, -36.83779616994944],
+                {}
+            ).addTo(map_062ed430fa7b45e4d29d4e8322dbf992);
+        
+    
+            var icon_d1595d2ba1e42697f60f2b5f81b10fe5 = L.AwesomeMarkers.icon(
+                {"extraClasses": "fa-rotate-0", "icon": "info-sign", "iconColor": "white", "markerColor": "blue", "prefix": "glyphicon"}
+            );
+            marker_bb008bfe26af29aeefe1b86c6e4a9da3.setIcon(icon_d1595d2ba1e42697f60f2b5f81b10fe5);
+        
+    
+        var popup_aa42fe42d87f7bde650a911e7ed3c93e = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_0c089e557e2a8197c7bc3e75bd4128fc = $(`<div id="html_0c089e557e2a8197c7bc3e75bd4128fc" style="width: 100.0%; height: 100.0%;">RUA PAJE MANOEL BALTAZAR, 0 SN, Porto Real do Colégio, 57290000</div>`)[0];
+                popup_aa42fe42d87f7bde650a911e7ed3c93e.setContent(html_0c089e557e2a8197c7bc3e75bd4128fc);
+            
+        
+
+        marker_bb008bfe26af29aeefe1b86c6e4a9da3.bindPopup(popup_aa42fe42d87f7bde650a911e7ed3c93e)
+        ;
+
+        
+    
+    
+            var marker_2a65d57929734c4740254d361ee20f1a = L.marker(
+                [-10.1843483, -36.8364861],
+                {}
+            ).addTo(map_062ed430fa7b45e4d29d4e8322dbf992);
+        
+    
+            var icon_cb8fde5b04e53a5f9eaaccfd7fb0e5e8 = L.AwesomeMarkers.icon(
+                {"extraClasses": "fa-rotate-0", "icon": "info-sign", "iconColor": "white", "markerColor": "blue", "prefix": "glyphicon"}
+            );
+            marker_2a65d57929734c4740254d361ee20f1a.setIcon(icon_cb8fde5b04e53a5f9eaaccfd7fb0e5e8);
+        
+    
+        var popup_bf24897d98576b41f8b47957bc922d14 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_f7c9402df4d23054f9fa8b265c310b83 = $(`<div id="html_f7c9402df4d23054f9fa8b265c310b83" style="width: 100.0%; height: 100.0%;">AVENIDA ADEMARIO VIEIRA DANTAS, 0 SN, Porto Real do Colégio, 57290000</div>`)[0];
+                popup_bf24897d98576b41f8b47957bc922d14.setContent(html_f7c9402df4d23054f9fa8b265c310b83);
+            
+        
+
+        marker_2a65d57929734c4740254d361ee20f1a.bindPopup(popup_bf24897d98576b41f8b47957bc922d14)
+        ;
+
+        
+    
+    
+            var marker_b5446ab9516a4fc80387ee87319eb3ee = L.marker(
+                [-10.181357125673122, -36.838766027024946],
+                {}
+            ).addTo(map_062ed430fa7b45e4d29d4e8322dbf992);
+        
+    
+            var icon_a1ada20332115421b393ac35eca545d2 = L.AwesomeMarkers.icon(
+                {"extraClasses": "fa-rotate-0", "icon": "info-sign", "iconColor": "white", "markerColor": "blue", "prefix": "glyphicon"}
+            );
+            marker_b5446ab9516a4fc80387ee87319eb3ee.setIcon(icon_a1ada20332115421b393ac35eca545d2);
+        
+    
+        var popup_7e61a9e190e562677b8a4614985e8ac1 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_bb82b21e7ff764a9d699d30c45abb3b1 = $(`<div id="html_bb82b21e7ff764a9d699d30c45abb3b1" style="width: 100.0%; height: 100.0%;">RUA SANTO ANTONIO, 0 SN, Porto Real do Colégio, 57290000</div>`)[0];
+                popup_7e61a9e190e562677b8a4614985e8ac1.setContent(html_bb82b21e7ff764a9d699d30c45abb3b1);
+            
+        
+
+        marker_b5446ab9516a4fc80387ee87319eb3ee.bindPopup(popup_7e61a9e190e562677b8a4614985e8ac1)
+        ;
+
+        
+    
+    
+            var marker_5aa1f264896f9a06dcd273f5e026b83a = L.marker(
+                [-10.181648899999999, -36.837781199999995],
+                {}
+            ).addTo(map_062ed430fa7b45e4d29d4e8322dbf992);
+        
+    
+            var icon_193f694375b75715e40e421cffc68f06 = L.AwesomeMarkers.icon(
+                {"extraClasses": "fa-rotate-0", "icon": "info-sign", "iconColor": "white", "markerColor": "blue", "prefix": "glyphicon"}
+            );
+            marker_5aa1f264896f9a06dcd273f5e026b83a.setIcon(icon_193f694375b75715e40e421cffc68f06);
+        
+    
+        var popup_f253a921889c11d30a854debc9c5a172 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_9978d72f551c44be06a8bddfc175d712 = $(`<div id="html_9978d72f551c44be06a8bddfc175d712" style="width: 100.0%; height: 100.0%;">CONJUNTO DIOCLECIO REIS, 0 SN, Porto Real do Colégio, 57290000</div>`)[0];
+                popup_f253a921889c11d30a854debc9c5a172.setContent(html_9978d72f551c44be06a8bddfc175d712);
+            
+        
+
+        marker_5aa1f264896f9a06dcd273f5e026b83a.bindPopup(popup_f253a921889c11d30a854debc9c5a172)
+        ;
+
+        
+    
+    
+            var marker_9f537b4baaa2715016dcd51765112df1 = L.marker(
+                [-10.182650952977307, -36.8346585575575],
+                {}
+            ).addTo(map_062ed430fa7b45e4d29d4e8322dbf992);
+        
+    
+            var icon_967e9fa5956156a729ff9f568ed48f46 = L.AwesomeMarkers.icon(
+                {"extraClasses": "fa-rotate-0", "icon": "info-sign", "iconColor": "white", "markerColor": "blue", "prefix": "glyphicon"}
+            );
+            marker_9f537b4baaa2715016dcd51765112df1.setIcon(icon_967e9fa5956156a729ff9f568ed48f46);
+        
+    
+        var popup_c740c887294c8bf80b87166a74f8f0cc = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_33755ea8c0181733dc897d281f87f798 = $(`<div id="html_33755ea8c0181733dc897d281f87f798" style="width: 100.0%; height: 100.0%;">RUA DA AURORA, 0 SN, Porto Real do Colégio, 57290000</div>`)[0];
+                popup_c740c887294c8bf80b87166a74f8f0cc.setContent(html_33755ea8c0181733dc897d281f87f798);
+            
+        
+
+        marker_9f537b4baaa2715016dcd51765112df1.bindPopup(popup_c740c887294c8bf80b87166a74f8f0cc)
+        ;
+
+        
+    
+    
+            var marker_1f73aa3a573be1239e095fc383734df8 = L.marker(
+                [-10.188102667931894, -36.83655194283082],
+                {}
+            ).addTo(map_062ed430fa7b45e4d29d4e8322dbf992);
+        
+    
+            var icon_dfb70b6823e00e3e3fb3b4a13dab62c0 = L.AwesomeMarkers.icon(
+                {"extraClasses": "fa-rotate-0", "icon": "info-sign", "iconColor": "white", "markerColor": "blue", "prefix": "glyphicon"}
+            );
+            marker_1f73aa3a573be1239e095fc383734df8.setIcon(icon_dfb70b6823e00e3e3fb3b4a13dab62c0);
+        
+    
+        var popup_ee8a419a446d244ea3f66fa89e1b928b = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_e63b12573954ea54a7dadbb4a6ded828 = $(`<div id="html_e63b12573954ea54a7dadbb4a6ded828" style="width: 100.0%; height: 100.0%;">RUA DA INDEPENDENCIA, 0 SN, Porto Real do Colégio, 57290000</div>`)[0];
+                popup_ee8a419a446d244ea3f66fa89e1b928b.setContent(html_e63b12573954ea54a7dadbb4a6ded828);
+            
+        
+
+        marker_1f73aa3a573be1239e095fc383734df8.bindPopup(popup_ee8a419a446d244ea3f66fa89e1b928b)
+        ;
+
+        
+    
+    
+            var marker_91b7d7aa769c65514b5c96dcf401f1e0 = L.marker(
+                [-10.188960570837203, -36.836607698525874],
+                {}
+            ).addTo(map_062ed430fa7b45e4d29d4e8322dbf992);
+        
+    
+            var icon_c4a2be50e4453c3106caaca4275d98b8 = L.AwesomeMarkers.icon(
+                {"extraClasses": "fa-rotate-0", "icon": "info-sign", "iconColor": "white", "markerColor": "blue", "prefix": "glyphicon"}
+            );
+            marker_91b7d7aa769c65514b5c96dcf401f1e0.setIcon(icon_c4a2be50e4453c3106caaca4275d98b8);
+        
+    
+        var popup_1ae9aac2ceb6f6c61a2636299e5df9a6 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_c11d423357239452080875e1c27aa936 = $(`<div id="html_c11d423357239452080875e1c27aa936" style="width: 100.0%; height: 100.0%;">RUA DAS PEDRINHAS, 111, Porto Real do Colégio, 57290000</div>`)[0];
+                popup_1ae9aac2ceb6f6c61a2636299e5df9a6.setContent(html_c11d423357239452080875e1c27aa936);
+            
+        
+
+        marker_91b7d7aa769c65514b5c96dcf401f1e0.bindPopup(popup_1ae9aac2ceb6f6c61a2636299e5df9a6)
+        ;
+
+        
+    
+    
+            var marker_fefec0b4c2e3dbabeeffc7723edde607 = L.marker(
+                [-10.188960570837203, -36.836607698525874],
+                {}
+            ).addTo(map_062ed430fa7b45e4d29d4e8322dbf992);
+        
+    
+            var icon_d93af38c8cde5a862a6d3229cf75c9d5 = L.AwesomeMarkers.icon(
+                {"extraClasses": "fa-rotate-0", "icon": "info-sign", "iconColor": "white", "markerColor": "blue", "prefix": "glyphicon"}
+            );
+            marker_fefec0b4c2e3dbabeeffc7723edde607.setIcon(icon_d93af38c8cde5a862a6d3229cf75c9d5);
+        
+    
+        var popup_b4c1ca2b43fd2a37fbe2a85a94599e9d = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_cd22a929e192fb9f3737fda46bbc3436 = $(`<div id="html_cd22a929e192fb9f3737fda46bbc3436" style="width: 100.0%; height: 100.0%;">RUA DAS PEDRINHAS, 0 SN, Porto Real do Colégio, 57290000</div>`)[0];
+                popup_b4c1ca2b43fd2a37fbe2a85a94599e9d.setContent(html_cd22a929e192fb9f3737fda46bbc3436);
+            
+        
+
+        marker_fefec0b4c2e3dbabeeffc7723edde607.bindPopup(popup_b4c1ca2b43fd2a37fbe2a85a94599e9d)
+        ;
+
+        
+    
+    
+            var marker_f5c39962ba4b1ef3126f9ddaf6123bc0 = L.marker(
+                [-10.18200609773501, -36.839274415977215],
+                {}
+            ).addTo(map_062ed430fa7b45e4d29d4e8322dbf992);
+        
+    
+            var icon_f06e4aab0c5daa38df65437da2e0d975 = L.AwesomeMarkers.icon(
+                {"extraClasses": "fa-rotate-0", "icon": "info-sign", "iconColor": "white", "markerColor": "blue", "prefix": "glyphicon"}
+            );
+            marker_f5c39962ba4b1ef3126f9ddaf6123bc0.setIcon(icon_f06e4aab0c5daa38df65437da2e0d975);
+        
+    
+        var popup_659f4c436635bca7b8d742a18985f02f = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_a5d084f9c92c4a0eec8b5b550d5a8258 = $(`<div id="html_a5d084f9c92c4a0eec8b5b550d5a8258" style="width: 100.0%; height: 100.0%;">RUA DOUTOR CLEMENTINO DO MONTE, 0 SN, Porto Real do Colégio, 57290000</div>`)[0];
+                popup_659f4c436635bca7b8d742a18985f02f.setContent(html_a5d084f9c92c4a0eec8b5b550d5a8258);
+            
+        
+
+        marker_f5c39962ba4b1ef3126f9ddaf6123bc0.bindPopup(popup_659f4c436635bca7b8d742a18985f02f)
+        ;
+
+        
+    
+    
+            var marker_7c700f3560512dc08e6fc5ea7087504c = L.marker(
+                [-10.18200609773501, -36.839274415977215],
+                {}
+            ).addTo(map_062ed430fa7b45e4d29d4e8322dbf992);
+        
+    
+            var icon_3d180e4f01a461a5690e145f2c917558 = L.AwesomeMarkers.icon(
+                {"extraClasses": "fa-rotate-0", "icon": "info-sign", "iconColor": "white", "markerColor": "blue", "prefix": "glyphicon"}
+            );
+            marker_7c700f3560512dc08e6fc5ea7087504c.setIcon(icon_3d180e4f01a461a5690e145f2c917558);
+        
+    
+        var popup_ef1e4ad81fe7c71c88356e5bada83614 = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_eedb8ee9f4bdb371a26b5401e1f5f396 = $(`<div id="html_eedb8ee9f4bdb371a26b5401e1f5f396" style="width: 100.0%; height: 100.0%;">RUA DOUTOR CLEMENTINO, 1120, Porto Real do Colégio, 57290000</div>`)[0];
+                popup_ef1e4ad81fe7c71c88356e5bada83614.setContent(html_eedb8ee9f4bdb371a26b5401e1f5f396);
+            
+        
+
+        marker_7c700f3560512dc08e6fc5ea7087504c.bindPopup(popup_ef1e4ad81fe7c71c88356e5bada83614)
+        ;
+
+        
+    
+    
+            var marker_99fa29fb5eb4854435563fc5e1151cdc = L.marker(
+                [-10.18200609773501, -36.839274415977215],
+                {}
+            ).addTo(map_062ed430fa7b45e4d29d4e8322dbf992);
+        
+    
+            var icon_aaa3f248777f184f08dd30ff5c450aad = L.AwesomeMarkers.icon(
+                {"extraClasses": "fa-rotate-0", "icon": "info-sign", "iconColor": "white", "markerColor": "blue", "prefix": "glyphicon"}
+            );
+            marker_99fa29fb5eb4854435563fc5e1151cdc.setIcon(icon_aaa3f248777f184f08dd30ff5c450aad);
+        
+    
+        var popup_021db9c56b2dcaba53d6771c82473b8a = L.popup({"maxWidth": "100%"});
+
+        
+            
+                var html_e077ff231aa87d9f3aa20725b8e33107 = $(`<div id="html_e077ff231aa87d9f3aa20725b8e33107" style="width: 100.0%; height: 100.0%;">RUA DR CLEMENTINO DO MONTE, 1127, Porto Real do Colégio, 57290000</div>`)[0];
+                popup_021db9c56b2dcaba53d6771c82473b8a.setContent(html_e077ff231aa87d9f3aa20725b8e33107);
+            
+        
+
+        marker_99fa29fb5eb4854435563fc5e1151cdc.bindPopup(popup_021db9c56b2dcaba53d6771c82473b8a)
+        ;
+
+        
+    
+</script>
+</html>
