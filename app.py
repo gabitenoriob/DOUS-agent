@@ -31,6 +31,7 @@ def ask_question():
         return jsonify({"response": "Não foi possível entender a pergunta."})
 
     result = execute_query(query)
+    print(f"Resultado da query: {result}")
     
     if not result:
         return jsonify({"response": "Nenhum resultado encontrado."})

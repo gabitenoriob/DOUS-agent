@@ -1,11 +1,12 @@
 from dataclasses import Field
 from dotenv import load_dotenv
+from langchain.schema.runnable import RunnablePassthrough
 # from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
 # from langchain.llms import HuggingFacePipeline
 from langchain.llms import BaseLLM
 import requests
+from langchain.schema import LLMResult
 import json
-from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 # import pydantic
 # import torch
@@ -43,44 +44,57 @@ class LocalLLM(BaseLLM):
         payload = {
             "model": self.model_name,
             "prompt": prompt,
-            "max_tokens": 1000,
+            "max_tokens": 100,
             "temperature": 0.0,
-            "top_p": 0.9
+            "top_p": 0.7 #regula quais palavras são consideradas para geração, escolhendo as mais prováveis onde a soma das probabilidades seja ate no max 0.7 por exemplo
         }
-        response = requests.post(LM_STUDIO_URL, headers=headers, data=json.dumps(payload))
-        if response.status_code == 200:
-            return response.json()['choices'][0]['text'].strip()
-        else:
-            raise Exception(f"Erro na API do LM Studio: {response.status_code} - {response.text}")
+        try:
+            response = requests.post(LM_STUDIO_URL, headers=headers, json=payload)
+            response.raise_for_status()
+            text_output = response.json().get('choices', [{}])[0].get('text', '').strip()
+
+            # Garante que apenas a query será retornada
+            if "```sql" in text_output:
+                text_output = text_output.split("```sql")[-1].split("```")[0].strip()
+
+            return text_output
+        except requests.RequestException as e:
+            raise Exception(f"Erro ao conectar à API do LM Studio: {e}")
 
     def _generate(self, prompts, stop=None):
-        return [{"text": self._call(prompt)} for prompt in prompts]
+        results = []
+        for prompt in prompts:
+            text = self._call(prompt)
+            results.append({"text": text})
+        return LLMResult(generations=[[result] for result in results])
 
     @property
     def _llm_type(self):
         return "local_llm"
 
-llm_local = LocalLLM(model_name="meta-llama-3.1-8b-instruct")
+llm_local = LocalLLM(model_name="qwq-32b")
+#"meta-llama/Llama-3.2-1B"
 
 
 # **Prompt para gerar a query SQL corretamente**
 prompt_generate_query = PromptTemplate(
     input_variables=["question"],
-    template=(
-        "Você é um assistente especialista em SQL. Gere uma query para um banco chamado 'dous' "
-        "com base na seguinte pergunta:\n{question}\n"
-        "Considere que os campos do banco incluem: "
-        "id, name, idOficio, pubName, artType, pubDate, artClass, artCategory, artSize, artNotes, "
-        "numberPage, pdfPage, editionNumber, highlightType, highlightPriority, highlight, "
-        "highlightimage, highlightimagename, idMateria, body, Midias ,texto, Identifica, Ementa,TituloSubTitulo.\n"
-        "Se a pergunta envolver 'resumo' ou 'texto', retorne o campo 'texto'.\n"
-        "Não adicione colunas desnecessárias. Responda apenas com a query SQL, sem explicações adicionais."
-    )
+    template = (
+    "Você é um assistente especialista em SQL. Gere **somente** a query SQL para a tabela 'dous' no banco de dados ativo"
+    "com base na seguinte pergunta:\n{question}\n"
+    "Os campos disponíveis são: "
+    "id, name, idOficio, pubName, artType, pubDate, artClass, artCategory, artSize, artNotes, "
+    "numberPage, pdfPage, editionNumber, highlightType, highlightPriority, highlight, "
+    "highlightimage, highlightimagename, idMateria, body, Midias, texto, Identifica, Ementa, Titulo,SubTitulo.\n"
+    "Se a pergunta envolver 'resumo' ou 'texto', retorne apenas o campo 'texto'.\n"
+    "Responda **exclusivamente** com a query SQL. Não inclua explicações, comentários ou formatação extra."
 )
-query_chain = LLMChain(llm=llm_local, prompt=prompt_generate_query) #ALTERAR P LLM LOCAL SE FOR USAR LOCAL OU LLM SE FOR USAR HUGGINGFACE
+
+)
+query_chain = RunnablePassthrough() | prompt_generate_query | llm_local
 
 def generate_query(question):
-    return query_chain.run(question)
+    return query_chain.invoke({"question": question})  
 
 # **Prompt para reformular a resposta**
 prompt_format_response = PromptTemplate(
@@ -91,7 +105,9 @@ prompt_format_response = PromptTemplate(
         "Formule uma resposta clara e objetiva para o usuário com base nesses dados."
     )
 )
-response_chain = LLMChain(llm=llm_local, prompt=prompt_format_response) # ALTERAR P LLM LOCAL SE FOR USAR LOCAL OU LLM SE FOR USAR HUGGINGFACE
+response_chain = RunnablePassthrough() | prompt_format_response | llm_local
 
 def format_response(question, raw_response):
-    return response_chain.run(question=question, raw_response=raw_response)
+    response = response_chain.invoke({"question": question, "raw_response": raw_response})
+    
+  
