@@ -10,8 +10,15 @@ database = 'dou'
 driver = 'ODBC Driver 17 for SQL Server'
 
 # Criar conexão com SQL Server
-conn_str = "mssql+pyodbc://@CGUAL42872042\\SQLEXPRESS01/dou?driver=ODBC+Driver+17+for+SQL+Server&trusted_connection=yes"
+conn_str = f"mssql+pyodbc://@{server}/{database}?driver={driver.replace(' ', '+')}&trusted_connection=yes"
 engine = create_engine(conn_str)
+
+try:
+    engine = create_engine(conn_str)
+    with engine.connect() as conn:
+        print("Conexão bem-sucedida!")
+except Exception as e:
+    print(f"Erro na conexão: {e}")
 
 def execute_query(query):
     """
@@ -19,6 +26,10 @@ def execute_query(query):
     """
     with engine.connect() as conn:
         result = conn.execute(text(query))
+        if not result:
+            print("Nenhum resultado encontrado.")
+        else:
+            print("Consulta executada com sucesso.")
         return [row for row in result]
 
 def parse_body(xml_file):
@@ -94,8 +105,8 @@ for file in files:
             else:  # Números
                 df[col] = df[col].fillna(0)
 
-        # Limpeza do HTML
-        df["Texto"] = df["Texto"].apply(clean_html)
+        # # Limpeza do HTML
+        # df["Texto"] = df["Texto"].apply(clean_html)
         df = df.drop_duplicates()
 
         data_list.append(df)

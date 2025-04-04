@@ -1,0 +1,38 @@
+eu tenho vario diários oficiais da união (documentos que ja estão guardados e seus campos divididos em colunas em uma tabela no meu bd) há uma integração com um chatbot para o usuário fazer perguntas e a llm gera uma query que pega o resultado e devolve p user mas gostaria de outro agente que é treinado com alguns desses DOUs e a partir deles consegue identificar semelhantes - ele aprende com os termos que são mais importantes 
+1 - seleciona portarias que determinam o envio de emendas parlamentares para fundos municipais e estaduais de saúde  - gabinete do ministro da saúde - dentro todos - quais são assinados por portaria da saúde e depois identificar quais são transferência de emenda - buscar termos que so estão em portaria de recurso de emenda 
+
+
+incremento temporário
+rateio dos recursos de transferência
+emenda parlamentares 
+aplicação de emenda
+atenção especializada a saúde
+relatório anual de gestão RAG 
+Bloco de Manutenção das Ações e Serviços Públicos de Saúde
+
+
+exemplo me passa a lista / tabela onde veredas é citado valor em todas as portarias 
+objetivo final: tabela completa juntando td que tem no bd para não precisar olhar tabela por tabela - deve ser contido numa so ondea pessoa vai procurar pelo hospital e la vai ter tudo onde ele foi referenciado
+
+
+UF
+município
+código IBGE do município
+nome do fundo 
+CNPJ 
+nome do estabelecimento 
+código CNES 
+CNPJ do estabelecimento 
+código da emenda parlamentar 
+valor por parlamentar ou valor por emenda
+valor total ou valor
+funcional programático
+numero da proposta
+
+
+ aglutinar / escolher o valor - normalização 
+juntar numa tabela so - acrescentando uma coluna da portaria n x e coluna data
+
+
+
+

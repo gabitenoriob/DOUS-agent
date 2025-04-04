@@ -80,14 +80,14 @@ llm_local = LocalLLM(model_name="qwq-32b")
 prompt_generate_query = PromptTemplate(
     input_variables=["question"],
     template = (
-    "Você é um assistente especialista em SQL. Gere **somente** a query SQL para a tabela 'dous' no banco de dados ativo"
+    "Você é um assistente especialista em SQL. Gere **somente** a query SQL para a tabela 'dous' no banco de dados ativo, não inclua explicação adicional.\n"
+    "Você deve responder à pergunta do usuário"
     "com base na seguinte pergunta:\n{question}\n"
     "Os campos disponíveis são: "
     "id, name, idOficio, pubName, artType, pubDate, artClass, artCategory, artSize, artNotes, "
     "numberPage, pdfPage, editionNumber, highlightType, highlightPriority, highlight, "
     "highlightimage, highlightimagename, idMateria, body, Midias, texto, Identifica, Ementa, Titulo,SubTitulo.\n"
-    "Se a pergunta envolver 'resumo' ou 'texto', retorne apenas o campo 'texto'.\n"
-    "Responda **exclusivamente** com a query SQL. Não inclua explicações, comentários ou formatação extra."
+    "Responda **exclusivamente** com a query SQL. NÃO inclua explicações, comentários ou formatação extra."
 )
 
 )
