@@ -53,9 +53,9 @@ def extrair_portarias():
         for idx, portaria in enumerate(portarias):
             try:
                 texto_portaria = portaria[1]
-                
-                # Extrai informações com a nova função
                 portaria_info = extract_portaria_info(texto_portaria)
+                
+                print(f"Portaria {idx+1}: Nº {portaria_info['numero_portaria']} - Data: {portaria_info['data_portaria']}")
                 
                 # Cria dicionário com informações consolidadas
                 portaria_dict = {
@@ -68,13 +68,18 @@ def extrair_portarias():
                     'numero_correto': portaria_info['numero_portaria'],
                     'data_correta': portaria_info['data_portaria']
                 }
+
+                print(f"Portaria {idx + 1} - Informações extraídas: {portaria_dict}")
                 
                 # Processa tabelas
+                print(f"Processando portaria {idx + 1}...")
                 tables = extract_tables_from_xml(texto_portaria)
+                print(f"Número de tabelas encontradas: {len(tables)}")
+                print(f"tables: {tables}")
                 
-                for table_idx, table_df in enumerate(tables):
+                for table_df in tables:
                     try:
-                        standardized_df = standardize_dataframe(table_df, portaria_dict)
+                        standardized_df = standardize_dataframe(table_df, portaria_info)
                         
                         if portaria_info['numero_portaria']:
                             standardized_df['numero da portaria'] = portaria_info['numero_portaria']
@@ -83,9 +88,7 @@ def extrair_portarias():
                         
                         all_data.append(standardized_df)
                     except Exception as e:
-                        print(f"Erro ao processar tabela {table_idx + 1}: {str(e)}")
-                        continue
-                        
+                        continue           
             except Exception as e:
                 print(f"Erro ao processar portaria {idx + 1}: {str(e)}")
                 continue

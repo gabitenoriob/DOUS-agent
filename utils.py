@@ -36,103 +36,111 @@ FIELD_MAPPING = {
 import re
 from datetime import datetime
 
+import re
+from datetime import datetime
+
 def extract_portaria_info(texto):
     """
-    Extrai número e data da portaria usando regex avançado e tratamento de variações
+    Extrai número e data da portaria com tratamento específico para os formatos do Ministério da Saúde
     """
-    # Padrão regex flexível para capturar todas as variações
-    portaria_pattern = r"""
-        (PORTARIA)                # Palavra 'PORTARIA'
-        \s+                       # Espaços
-        (?:GM/MS\s+)?             # Opcional: 'GM/MS' 
-        (?:N[º°]|NUMERO?|N\.?)\s*  # Variantes de número (Nº, N°, NUMERO, N)
-        \s*                       # Espaços opcionais
-        ([\d.,]+)                 # Número (permite pontos e vírgulas)
-        \s*                       # Espaços opcionais
-        (?:,?\s*DE\s+)?           # Opcional: ' DE ' ou ', DE '
-        (\d{1,2}\s+DE\s+          # Dia + ' DE '
-        (?:JANEIRO|FEVEREIRO|MAR[ÇC]O|ABRIL|MAIO|JUNHO|  # Mês
-           JULHO|AGOSTO|SETEMBRO|OUTUBRO|NOVEMBRO|DEZEMBRO)
-        \s+DE\s+\d{4})            # ' DE ' + ano
-    """
-    
     info = {'numero_portaria': None, 'data_portaria': None}
     
-    # Busca no texto completo primeiro
-    match = re.search(portaria_pattern, texto, re.IGNORECASE | re.VERBOSE)
+    # Padrão regex otimizado para os exemplos fornecidos
+    padrao = r"""
+        PORTARIA\s+GM/MS\s+  # Prefixo constante
+        N[º°]\s*             # Indicador de número
+        ([\d.,]+)            # Número da portaria (com pontos ou vírgulas)
+        ,?\s*DE\s*           # Separador
+        (\d{1,2})\s+DE\s+    # Dia
+        ([A-ZÇ]+)\s+DE\s+     # Mês (com acentuação)
+        (\d{4})              # Ano
+    """
     
-    # Se não encontrou, tenta em tags específicas
-    if not match:
-        soup = BeautifulSoup(texto, 'html.parser')
-        for tag in ['p.identifica', 'div.identificacao', 'span.numero-portaria']:
-            element = soup.select_one(tag)
-            if element:
-                match = re.search(portaria_pattern, element.get_text(), 
-                                re.IGNORECASE | re.VERBOSE)
-                if match:
-                    break
+    # Busca no texto
+    match = re.search(padrao, texto, re.IGNORECASE | re.VERBOSE)
     
     if match:
-        # Tratamento do número
-        numero = match.group(3).replace('.', '').replace(',', '.')
-        info['numero_portaria'] = numero
-        
-        # Tratamento da data
-        meses = {
-            'JANEIRO': '01', 'FEVEREIRO': '02', 'MARÇO': '03', 'MARCO': '03',
-            'ABRIL': '04', 'MAIO': '05', 'JUNHO': '06',
-            'JULHO': '07', 'AGOSTO': '08', 'SETEMBRO': '09',
-            'OUTUBRO': '10', 'NOVEMBRO': '11', 'DEZEMBRO': '12'
-        }
-        
-        data_texto = match.group(4)
         try:
-            dia, _, mes, _, ano = data_texto.split()
-            mes_num = meses[mes.upper()]
+            # Tratamento do número
+            numero = match.group(1).replace('.', '').replace(',', '.')
+            info['numero_portaria'] = numero
+            
+            # Tratamento da data
+            meses = {
+                'JANEIRO': '01', 'FEVEREIRO': '02', 'MARÇO': '03', 'MARCO': '03',
+                'ABRIL': '04', 'MAIO': '05', 'JUNHO': '06',
+                'JULHO': '07', 'AGOSTO': '08', 'SETEMBRO': '09',
+                'OUTUBRO': '10', 'NOVEMBRO': '11', 'DEZEMBRO': '12'
+            }
+            
+            dia = match.group(2)
+            mes = match.group(3).upper()
+            ano = match.group(4)
+            
+            mes_num = meses.get(mes, '01')
             info['data_portaria'] = f"{int(dia):02d}/{mes_num}/{ano}"
-        except:
-            pass
+            
+        except Exception as e:
+            print(f"Erro ao processar dados da portaria: {e}")
     
     return info
+
+
 def extract_tables_from_xml(xml_text):
-    """Extrai tabelas de texto HTML e retorna como DataFrames"""
+    """Extrai tabelas de texto HTML/XML e retorna como DataFrames"""
+    print("Iniciando extração de tabelas do XML...")
     soup = BeautifulSoup(xml_text, 'html.parser')
     tables = soup.find_all('table')
-    
+    print(f"Número de tabelas encontradas: {len(tables)}")
+
     results = []
-    for table in tables:
-        # Extrair linhas da tabela
+    
+    for table_index, table in enumerate(tables):
+        print(f"\n🔹 Processando tabela {table_index + 1}...")
         rows = table.find_all('tr')
-        if len(rows) < 2:  # Pelo menos cabeçalho + 1 linha de dados
-            continue
-            
-        # Extrair cabeçalhos - considerar th ou a primeira linha de td
-        header_cells = rows[0].find_all(['th', 'td'])
-        if not header_cells:
-            header_cells = rows[1].find_all(['th', 'td'])
-            
+        print(f"  Número de linhas na tabela: {len(rows)}")
+
+        if len(rows) < 2:
+            print("  ⚠️ Tabela ignorada por ter menos de 2 linhas.")
+            continue  
+
+        # Extração correta dos headers (pegando o texto dentro de <p> se houver)
+        header_cells = rows[1].find_all(['td', 'th'])
         headers = [cell.get_text(strip=True) for cell in header_cells]
-        
-        # Determinar linha inicial de dados (pular cabeçalhos)
-        data_start = 1 if rows[0].find('th') else 0
-        
-        # Extrair dados
+        print(f"  🏷️ Headers identificados: {headers}")
+
         data = []
-        for row in rows[data_start:]:
-            cells = row.find_all(['td', 'th'])
+        expected_columns = len(headers)  # Número esperado de colunas
+
+        for row_index, row in enumerate(rows[2:], start=1): 
+            cells = row.find_all('td')
             row_data = [cell.get_text(strip=True) for cell in cells]
-            if row_data and len(row_data) == len(headers):
-                data.append(row_data)
-        
+            print(f"  🔹 Linha {row_index} extraída: {row_data}")
+
+            # Se a linha tem menos colunas, preenche com None
+            if len(row_data) < expected_columns:
+                row_data.extend([None] * (expected_columns - len(row_data)))
+            # Se tem mais colunas, corta o excesso
+            elif len(row_data) > expected_columns:
+                row_data = row_data[:expected_columns]
+
+            data.append(row_data)
+
         if headers and data:
             try:
                 df = pd.DataFrame(data, columns=headers)
+                print(f"✅ DataFrame criado com sucesso para a tabela {table_index + 1}.")
                 results.append(df)
             except Exception as e:
-                print(f"Erro ao criar DataFrame: {e}")
-                continue
-                
+                print(f"❌ Erro ao criar DataFrame para a tabela {table_index + 1}: {e}")
+        else:
+            print(f"⚠️ Tabela {table_index + 1} ignorada por falta de headers ou dados.")
+
+    print(f"\n📌 Extração concluída. Total de DataFrames criados: {len(results)}")
     return results
+
+
+
 def extract_info_from_text(texto):
     """
     Extrai informações relevantes do texto HTML da portaria
@@ -192,6 +200,8 @@ def parse_brazilian_date(date_str):
     return None
 def standardize_dataframe(df, portaria_info):
     """Padroniza o DataFrame para o formato desejado"""
+    df = df.copy()
+
     # Mapeamento de colunas com regex para capturar variações
     column_mapping = {
         r'UF|ESTADO': 'UF',
@@ -199,7 +209,7 @@ def standardize_dataframe(df, portaria_info):
         r'COD(IGO)?\s*IBGE|IBGE': 'código IBGE do município',
         r'ENTIDADE|FUNDO|RAZÃO SOCIAL': 'nome do fundo',
         r'CNPJ': 'CNPJ',
-        r'ESTABELECIMENTO|NOME FANTASIA': 'nome do estabelecimento',
+        r'ESTABELECIMENTO|NOME FANTASIA|RAZÃO SOCIAL': 'nome do estabelecimento',
         r'CNES': 'código CNES',
         r'CNPJ\s*DO\s*ESTABELECIMENTO': 'CNPJ do estabelecimento',
         r'C[ÓO]D(\.|IGO)?\s*EMENDA': 'código da emenda parlamentar',
@@ -212,11 +222,8 @@ def standardize_dataframe(df, portaria_info):
         r'DATA': 'data'
     }
     
-    # Renomear colunas com base em regex
-    for pattern, new_name in column_mapping.items():
-        for col in df.columns:
-            if re.search(pattern, col, re.IGNORECASE):
-                df.rename(columns={col: new_name}, inplace=True)
+    # Renomear colunas 
+    df = df.rename(columns={k: v for k, v in column_mapping.items() if k in df.columns})
     
     # Garantir colunas esperadas
     expected_columns = [
@@ -227,23 +234,17 @@ def standardize_dataframe(df, portaria_info):
         'numero da portaria', 'data'
     ]
     
+    # Adicionar colunas faltantes
     for col in expected_columns:
         if col not in df.columns:
-            df[col] = None
+            df.loc[:, col] = None  
     
-    # Preenchimento inteligente dos metadados
-    df['numero da portaria'] = (portaria_info.get('numero_correto') or 
-                              df.get('numero da portaria') or 
-                              portaria_info.get('pubName'))
+     # Adicionar metadados da portaria de forma segura
+    if 'numero da portaria' not in df.columns or df['numero da portaria'].isnull().all():
+        df.loc[:, 'numero da portaria'] = portaria_info.get('numero_portaria')
     
-    df['data'] = (portaria_info.get('data_correta') or 
-                 df.get('data') or 
-                 portaria_info.get('pubDate'))
-    
-    # Conversão de datas para formato padrão
-    if 'data' in df.columns:
-        df['data'] = df['data'].apply(lambda x: parse_brazilian_date(x).strftime('%d/%m/%Y') 
-                                  if parse_brazilian_date(x) else x)
+    if 'data' not in df.columns or df['data'].isnull().all():
+        df.loc[:, 'data'] = portaria_info.get('data_portaria')
     
     return df[expected_columns]
 

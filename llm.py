@@ -1,33 +1,13 @@
 from dataclasses import Field
 from dotenv import load_dotenv
 from langchain.schema.runnable import RunnablePassthrough
-# from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
-# from langchain.llms import HuggingFacePipeline
 from langchain.llms import BaseLLM
 import requests
 from langchain.schema import LLMResult
 import json
 from langchain.prompts import PromptTemplate
-# import pydantic
-# import torch
 from huggingface_hub import login
 import os
-# load_dotenv()
-
-# login(token=os.getenv('HUGGINGFACE_TOKEN'))
-# model_name = "meta-llama/Llama-3.2-1B"
-# tokenizer = AutoTokenizer.from_pretrained(model_name)
-# model = AutoModelForCausalLM.from_pretrained(model_name)
-
-# generator = pipeline(
-#     "text-generation",
-#     model=model,
-#     tokenizer=tokenizer,
-#     max_new_tokens=1000,  
-#     temperature=0.0,  
-#     top_p=0.9
-# )
-# llm = HuggingFacePipeline(pipeline=generator)
 
 
 LM_STUDIO_URL = "http://10.2.3.63:1234/v1/completions"
@@ -53,7 +33,6 @@ class LocalLLM(BaseLLM):
             response.raise_for_status()
             text_output = response.json().get('choices', [{}])[0].get('text', '').strip()
 
-            # Garante que apenas a query será retornada
             if "```sql" in text_output:
                 text_output = text_output.split("```sql")[-1].split("```")[0].strip()
 
@@ -73,10 +52,8 @@ class LocalLLM(BaseLLM):
         return "local_llm"
 
 llm_local = LocalLLM(model_name="qwq-32b")
-#"meta-llama/Llama-3.2-1B"
+llm_local = LocalLLM(model_name="gemma-3-27b-it")
 
-
-# **Prompt para gerar a query SQL corretamente**
 prompt_generate_query = PromptTemplate(
     input_variables=["question"],
     template = (
@@ -96,7 +73,6 @@ query_chain = RunnablePassthrough() | prompt_generate_query | llm_local
 def generate_query(question):
     return query_chain.invoke({"question": question})  
 
-# **Prompt para reformular a resposta**
 prompt_format_response = PromptTemplate(
     input_variables=["question", "raw_response"],
     template=(
