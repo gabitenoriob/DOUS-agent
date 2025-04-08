@@ -85,5 +85,31 @@ response_chain = RunnablePassthrough() | prompt_format_response | llm_local
 
 def format_response(question, raw_response):
     response = response_chain.invoke({"question": question, "raw_response": raw_response})
+
+import subprocess
+import json
+
+def process_table_with_llm(table_text):
+    prompt = f"""
+    Tenho uma tabela extraída de um documento, mas os valores estão desalinhados.
+
+    1️⃣ Reestruture os dados para que fiquem corretamente organizados com base nos headers.
+    2️⃣ Preencha valores ausentes com "NULL".
+
+    📌 Aqui está a tabela extraída:
+    {table_text}
+
+    Retorne a saída em JSON estruturado.
+    """
+
+    response = llm_local.invoke(prompt)
+
+    try:
+        structured_data = json.loads(response)
+        return structured_data
+    except json.JSONDecodeError:
+        print("Erro ao decodificar JSON. Saída do modelo:", response)
+        return None
+
     
   

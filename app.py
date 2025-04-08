@@ -1,4 +1,5 @@
 from io import BytesIO, StringIO
+import os
 
 import pandas as pd
 from flask import Flask, make_response, render_template, request, jsonify
@@ -21,7 +22,6 @@ def extrair_portarias():
     try:
         print("Iniciando a função 'extrair-portarias'...")
 
-        # Query para buscar as portarias relevantes
         query = """
         SELECT id, texto, pubName, pubDate, artType, artCategory, Ementa
         FROM dous
@@ -40,7 +40,6 @@ def extrair_portarias():
         """
         print(f"Query executada: {query}")
 
-        # Executar a query
         portarias = execute_query(query)
         print(f"Portarias retornadas: {len(portarias) if portarias else 0}")
 
@@ -48,64 +47,64 @@ def extrair_portarias():
             print("Nenhuma portaria encontrada com os critérios especificados.")
             return jsonify({"message": "Nenhuma portaria encontrada com os critérios especificados"}), 404
 
-        # Processar cada portaria
         all_data = []
+        csv_filename = 'dfs.csv'
+        excel_filename = 'dfs.xlsx'
+
         for idx, portaria in enumerate(portarias):
             try:
                 texto_portaria = portaria[1]
                 portaria_info = extract_portaria_info(texto_portaria)
-                
-                print(f"Portaria {idx+1}: Nº {portaria_info['numero_portaria']} - Data: {portaria_info['data_portaria']}")
-                
-                # Cria dicionário com informações consolidadas
-                portaria_dict = {
-                    'texto': texto_portaria,
-                    'pubName': portaria[2] if not portaria_info['numero_portaria'] else portaria_info['numero_portaria'],
-                    'pubDate': portaria[3] if not portaria_info['data_portaria'] else portaria_info['data_portaria'],
-                    'artType': portaria[4],
-                    'artCategory': portaria[5],
-                    'ementa': portaria[6],
-                    'numero_correto': portaria_info['numero_portaria'],
-                    'data_correta': portaria_info['data_portaria']
-                }
 
-                print(f"Portaria {idx + 1} - Informações extraídas: {portaria_dict}")
-                
-                # Processa tabelas
-                print(f"Processando portaria {idx + 1}...")
+                print(f"Portaria {idx+1}: Nº {portaria_info['numero_portaria']} - Data: {portaria_info['data_portaria']}")
+
                 tables = extract_tables_from_xml(texto_portaria)
                 print(f"Número de tabelas encontradas: {len(tables)}")
-                print(f"tables: {tables}")
-                
+
                 for table_df in tables:
                     try:
                         standardized_df = standardize_dataframe(table_df, portaria_info)
-                        
+
                         if portaria_info['numero_portaria']:
                             standardized_df['numero da portaria'] = portaria_info['numero_portaria']
                         if portaria_info['data_portaria']:
                             standardized_df['data'] = portaria_info['data_portaria']
-                        
+
+                        # Salvar cada iteração no CSV sem sobrescrever (append)
+                        standardized_df.to_csv(csv_filename, mode='a', index=False, encoding='utf-8-sig', sep=';', header=not os.path.exists(csv_filename))
+                        standardized_df.to_excel(excel_filename, mode='a', index=False, sheet_name='Portarias', header=not os.path.exists(excel_filename))  
+
                         all_data.append(standardized_df)
+                        print(f"Tabela processada e adicionada: {standardized_df.head()}")
+
                     except Exception as e:
-                        continue           
+                        print(f"Erro ao processar tabela da portaria {idx + 1}: {str(e)}")
+                        continue
+
             except Exception as e:
                 print(f"Erro ao processar portaria {idx + 1}: {str(e)}")
                 continue
 
         if not all_data:
             return jsonify({"message": "Nenhuma tabela válida encontrada"}), 404
-        
-        final_df = pd.concat(all_data, ignore_index=True)
-        final_df = clean_data(final_df)
-        final_df.sort_values(by=['numero da portaria', 'município'], inplace=True)
-        
+
+        # Unir todas as tabelas apenas se houver dados
+        if all_data:
+            final_df = pd.concat(all_data, ignore_index=True)
+
+            final_df.to_csv('tabelas_unificadas.csv', index=False, encoding='utf-8-sig', sep=';')
+            final_df.to_excel('tabelas_unificadas.xlsx')
+
+            print("Tabela unificada salva")
+        else:
+            print("Nenhuma tabela válida encontrada para unificação.")
+
         return jsonify({
             "data": final_df.to_dict(orient='records'),
             "count": len(final_df),
             "status": "success"
         })
-        
+
     except Exception as e:
         print(f"Erro no endpoint: {str(e)}")
         return jsonify({"error": str(e)}), 500

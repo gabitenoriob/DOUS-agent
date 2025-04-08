@@ -91,7 +91,6 @@ def extract_tables_from_xml(xml_text):
     print("Iniciando extração de tabelas do XML...")
     soup = BeautifulSoup(xml_text, 'html.parser')
     tables = soup.find_all('table')
-    print(f"Número de tabelas encontradas: {len(tables)}")
 
     results = []
     
@@ -104,23 +103,20 @@ def extract_tables_from_xml(xml_text):
             print("  ⚠️ Tabela ignorada por ter menos de 2 linhas.")
             continue  
 
-        # Extração correta dos headers (pegando o texto dentro de <p> se houver)
         header_cells = rows[1].find_all(['td', 'th'])
         headers = [cell.get_text(strip=True) for cell in header_cells]
         print(f"  🏷️ Headers identificados: {headers}")
 
         data = []
-        expected_columns = len(headers)  # Número esperado de colunas
+        expected_columns = len(headers) 
 
         for row_index, row in enumerate(rows[2:], start=1): 
             cells = row.find_all('td')
             row_data = [cell.get_text(strip=True) for cell in cells]
             print(f"  🔹 Linha {row_index} extraída: {row_data}")
 
-            # Se a linha tem menos colunas, preenche com None
             if len(row_data) < expected_columns:
                 row_data.extend([None] * (expected_columns - len(row_data)))
-            # Se tem mais colunas, corta o excesso
             elif len(row_data) > expected_columns:
                 row_data = row_data[:expected_columns]
 
@@ -137,6 +133,7 @@ def extract_tables_from_xml(xml_text):
             print(f"⚠️ Tabela {table_index + 1} ignorada por falta de headers ou dados.")
 
     print(f"\n📌 Extração concluída. Total de DataFrames criados: {len(results)}")
+    print(f"cabeças dos dataframes: {[df.columns.tolist() for df in results]}")
     return results
 
 
@@ -198,37 +195,51 @@ def parse_brazilian_date(date_str):
         except:
             return None
     return None
+
 def standardize_dataframe(df, portaria_info):
     """Padroniza o DataFrame para o formato desejado"""
     df = df.copy()
+    print(f"DataFrame original:\n{df.head()}")
+
 
     # Mapeamento de colunas com regex para capturar variações
     column_mapping = {
         r'UF|ESTADO': 'UF',
         r'MUNIC[IÍ]PIO': 'município',
-        r'COD(IGO)?\s*IBGE|IBGE': 'código IBGE do município',
+        r'C[OÓ]D(\.|IGO)?\s*IBGE|IBGE': 'código IBGE',
         r'ENTIDADE|FUNDO|RAZÃO SOCIAL': 'nome do fundo',
         r'CNPJ': 'CNPJ',
         r'ESTABELECIMENTO|NOME FANTASIA|RAZÃO SOCIAL': 'nome do estabelecimento',
-        r'CNES': 'código CNES',
+        r'CNES|C[ÓO]D(\.|IGO)?\s CNES ': 'CNES',
         r'CNPJ\s*DO\s*ESTABELECIMENTO': 'CNPJ do estabelecimento',
         r'C[ÓO]D(\.|IGO)?\s*EMENDA': 'código da emenda parlamentar',
         r'VALOR\s*POR\s*EMENDA\s*\(R\$\)': 'valor por emenda',
         r'VALOR\s*POR\s*PARLAMENTAR\s*\(R\$\)': 'valor por parlamentar',
-        r'VALOR\s*(TOTAL)?\s*(DA\s*PROPOSTA)?\s*\(?R\$\)?': 'valor',
+        r'VALOR\s*(TOTAL)?\s*(DA\s*PROPOSTA)?\s*\(?R\$\)?|TOTAL*\(R\$\)?': 'valor',
         r'FUNCIONAL\s*PROGRAM[ÁA]TICA': 'funcional programático',
         r'N[º°]\s*DA\s*PROPOSTA|PROPOSTA\s*SAIPS': 'numero da proposta',
         r'N[ÚU]MERO\s*DA\s*PORTARIA': 'numero da portaria',
         r'DATA': 'data'
     }
-    
-    # Renomear colunas 
-    df = df.rename(columns={k: v for k, v in column_mapping.items() if k in df.columns})
-    
+
+    # Criar um dicionário de renomeação baseado nos nomes reais do DataFrame
+    rename_dict = {}
+    for col in df.columns:
+        for pattern, new_name in column_mapping.items():
+            if re.search(pattern, col, re.IGNORECASE):
+                rename_dict[col] = new_name
+                break
+    print(f"Renomeação de colunas: {rename_dict}")
+
+
+    # Aplicar a renomeação
+    df.rename(columns=rename_dict, inplace=True)
+    print(f"DataFrame após renomeação:\n{df.head()}")
+
     # Garantir colunas esperadas
     expected_columns = [
-        'UF', 'município', 'código IBGE do município', 'nome do fundo', 'CNPJ',
-        'nome do estabelecimento', 'código CNES', 'CNPJ do estabelecimento',
+        'UF', 'município', 'código IBGE', 'nome do fundo', 'CNPJ',
+        'nome do estabelecimento', 'código CNES', 'CNPJ',
         'código da emenda parlamentar', 'valor por emenda', 'valor por parlamentar', 
         'valor', 'funcional programático', 'numero da proposta',
         'numero da portaria', 'data'
@@ -237,16 +248,19 @@ def standardize_dataframe(df, portaria_info):
     # Adicionar colunas faltantes
     for col in expected_columns:
         if col not in df.columns:
-            df.loc[:, col] = None  
+            df[col] = None  
     
-     # Adicionar metadados da portaria de forma segura
     if 'numero da portaria' not in df.columns or df['numero da portaria'].isnull().all():
-        df.loc[:, 'numero da portaria'] = portaria_info.get('numero_portaria')
+        df['numero da portaria'] = portaria_info.get('numero_portaria')
     
     if 'data' not in df.columns or df['data'].isnull().all():
-        df.loc[:, 'data'] = portaria_info.get('data_portaria')
+        df['data'] = portaria_info.get('data_portaria')
     
+    #ta bom
+    print(f"DataFrame após adição de colunas:\n{df.head()}")
+    print(f"df com colunas {df[expected_columns].head()}")
     return df[expected_columns]
+
 
 def clean_data(df):
     """Limpa e padroniza os dados"""
