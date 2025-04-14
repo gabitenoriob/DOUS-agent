@@ -7,7 +7,6 @@
 ## 🚀 Funcionalidades
 
 - 📤 Upload de arquivos CSV ou Excel
-- 🔄 Conversão entre formatos `.csv` ⇄ `.xlsx`
 - 🧩 Unificação e tratamento de dados
 - 🤖 Integração com LLMs para análise automática de conteúdo
 - 🌐 Interface web simples e funcional
