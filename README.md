@@ -1,12 +1,32 @@
-DOUS Agent is a Python-based application designed to process, unify, and analyze data from various sources. It offers a user-friendly interface for uploading CSV and Excel files, converting between formats, and leveraging language models for data analysis.
+# 🧠 DOUS Agent
 
-Features
-Data Upload: Easily upload CSV or Excel files for processing.
+**DOUS Agent** é uma aplicação Python com interface web para unificação, conversão e análise de dados tabulares (CSV e Excel), com suporte à integração com modelos de linguagem (LLMs).
 
-Format Conversion: Convert between CSV and Excel formats seamlessly.
+---
 
-Data Unification: Merge multiple datasets into a unified format.
+## 🚀 Funcionalidades
 
-Language Model Integration: Utilize language models for advanced data analysis and insights.
+- 📤 Upload de arquivos CSV ou Excel
+- 🔄 Conversão entre formatos `.csv` ⇄ `.xlsx`
+- 🧩 Unificação e tratamento de dados
+- 🤖 Integração com LLMs para análise automática de conteúdo
+- 🌐 Interface web simples e funcional
 
-Web Interface: Interact with the application through a simple web interface.
+---
+
+## 🛠️ Pré-requisitos
+
+- Python 3.8+
+- pip
+
+---
+
+DOUS-agent/
+├── app.py                   # Inicialização do servidor Flask
+├── get.py                   # Leitura e pré-processamento de dados
+├── llm.py                   # Comunicação com modelos de linguagem
+├── send.py                  # Envio e resposta para frontend
+├── utils.py                 # Funções auxiliares
+├── templates/               # HTML da interface web
+└── static/                  # Estilos e JS
+
