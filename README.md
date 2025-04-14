@@ -16,7 +16,7 @@
 ## 🛠️ Pré-requisitos
 
 - Python 3.8+
-- pip
+- pip install -r requirements.txt
 
 ---
 
