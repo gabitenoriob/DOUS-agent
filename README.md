@@ -20,12 +20,20 @@
 
 ---
 
-DOUS-agent/
-├── app.py                   # Inicialização do servidor Flask
-├── get.py                   # Leitura e pré-processamento de dados
-├── llm.py                   # Comunicação com modelos de linguagem
-├── send.py                  # Envio e resposta para frontend
-├── utils.py                 # Funções auxiliares
-├── templates/               # HTML da interface web
-└── static/                  # Estilos e JS
+DOUS-agent/  
+
+├── app.py                   # Inicialização do servidor Flask  
+
+├── get.py                   # Leitura e pré-processamento de dados  
+
+├── llm.py                   # Comunicação com modelos de linguagem  
+
+├── send.py                  # Envio e resposta para frontend  
+
+├── utils.py                 # Funções auxiliares  
+
+├── templates/               # HTML da interface web  
+
+└── static/                  # Estilos e JS  
+
 
