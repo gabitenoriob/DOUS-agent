@@ -24,7 +24,7 @@ class LocalLLM(BaseLLM):
         payload = {
             "model": self.model_name,
             "prompt": prompt,
-            "max_tokens": 100,
+            "max_tokens": 131072,
             "temperature": 0.0,
             "top_p": 0.7 #regula quais palavras são consideradas para geração, escolhendo as mais prováveis onde a soma das probabilidades seja ate no max 0.7 por exemplo
         }
@@ -52,7 +52,7 @@ class LocalLLM(BaseLLM):
         return "local_llm"
 
 llm_local = LocalLLM(model_name="qwq-32b")
-llm_local = LocalLLM(model_name="gemma-3-27b-it")
+llm_local = LocalLLM(model_name="gemma-3-12b-it")
 
 prompt_generate_query = PromptTemplate(
     input_variables=["question"],
@@ -86,30 +86,89 @@ response_chain = RunnablePassthrough() | prompt_format_response | llm_local
 def format_response(question, raw_response):
     response = response_chain.invoke({"question": question, "raw_response": raw_response})
 
-import subprocess
-import json
+import pandas as pd
+import os
+import requests
 
-def process_table_with_llm(table_text):
+def extract_table_using_llm(texto_portaria):
+    """
+    Usa o LLM (Gemma-3-27b-it) para extrair e estruturar tabelas do texto da portaria.
+    Retorna uma lista de DataFrames com as tabelas extraídas.
+    """
     prompt = f"""
-    Tenho uma tabela extraída de um documento, mas os valores estão desalinhados.
+    Extraia e estruture a tabela contida no seguinte texto XML da portaria:
+            
+    {texto_portaria}
 
-    1️⃣ Reestruture os dados para que fiquem corretamente organizados com base nos headers.
-    2️⃣ Preencha valores ausentes com "NULL".
-
-    📌 Aqui está a tabela extraída:
-    {table_text}
-
-    Retorne a saída em JSON estruturado.
+    Responda apenas com a tabela formatada corretamente em CSV. 
+    Use ";" como separador.
     """
 
-    response = llm_local.invoke(prompt)
+    headers = {"Content-Type": "application/json"}
+    payload = {
+        "model": "gemma-3-12b-it",
+        "prompt": prompt,
+        "max_tokens":131072,
+        "temperature": 0.0,
+        "top_p": 0.7
+    }
 
     try:
-        structured_data = json.loads(response)
-        return structured_data
-    except json.JSONDecodeError:
-        print("Erro ao decodificar JSON. Saída do modelo:", response)
+        response = requests.post("http://10.2.3.63:1234/v1/completions", headers=headers, json=payload)
+        response.raise_for_status()
+        csv_output = response.json().get('choices', [{}])[0].get('text', '').strip()
+        
+        # Converter CSV em DataFrame
+        from io import StringIO
+        df = pd.read_csv(StringIO(csv_output), delimiter=";")
+        return df
+    except requests.RequestException as e:
+        print(f"Erro ao conectar ao LLM para extração de tabela: {e}")
         return None
+
+def process_portarias_with_llm(portarias):
+    """
+    Percorre as portarias e extrai tabelas via LLM.
+    Salva as tabelas extraídas em CSV/XLS unificado.
+    """
+    all_data = []
+    csv_filename = 'tabelas_unificadas.csv'
+    excel_filename = 'tabelas_unificadas.xlsx'
+
+    for idx, portaria in enumerate(portarias):
+        try:
+            texto_portaria = portaria[1]
+            tables_df = extract_table_using_llm(texto_portaria)
+
+            if tables_df is not None:
+                # Adiciona metadados da portaria no DF
+                tables_df['numero da portaria'] = portaria[0]  # ID da portaria
+                tables_df['data'] = portaria[3]  # Data da portaria
+
+                # Salvar no CSV e Excel sem sobrescrever
+                tables_df.to_csv(csv_filename, mode='a', index=False, encoding='utf-8-sig', sep=';', header=not os.path.exists(csv_filename))
+                with pd.ExcelWriter(excel_filename, mode='a', engine='openpyxl', if_sheet_exists='overlay') as writer:
+                    tables_df.to_excel(writer, sheet_name='Portarias', index=False, header=not os.path.exists(excel_filename))
+
+                all_data.append(tables_df)
+                print(f"Tabela extraída e adicionada: {tables_df.shape[0]} linhas")
+            else:
+                print(f"Nenhuma tabela válida extraída da portaria {idx + 1}")
+
+        except Exception as e:
+            print(f"Erro ao processar portaria {idx + 1}: {str(e)}")
+            continue
+
+    # Unir todas as tabelas se houver dados
+    if all_data:
+        final_df = pd.concat(all_data, ignore_index=True)
+        final_df.to_csv(csv_filename, index=False, encoding='utf-8-sig', sep=';')
+        final_df.to_excel(excel_filename, index=False)
+        print("Tabela unificada salva com sucesso.")
+    else:
+        print("Nenhuma tabela válida encontrada para unificação.")
+
+
 
     
   

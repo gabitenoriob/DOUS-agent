@@ -33,12 +33,20 @@ FIELD_MAPPING = {
     "Titulo": ["titulo", "Titulo"],
     "SubTitulo": ["subtitulo", "SubTitulo"]
 }
-import re
-from datetime import datetime
 
 import re
 from datetime import datetime
+def extract_portaria_info_nlp(texto):
+    doc = nlp(texto)
+    info = {"numero_portaria": None, "data_portaria": None}
+    
+    for ent in doc.ents:
+        if ent.label_ == "MISC" and "PORTARIA" in ent.text:
+            info["numero_portaria"] = ent.text
+        elif ent.label_ == "DATE":
+            info["data_portaria"] = ent.text
 
+    return info
 def extract_portaria_info(texto):
     """
     Extrai número e data da portaria com tratamento específico para os formatos do Ministério da Saúde
@@ -95,17 +103,17 @@ def extract_tables_from_xml(xml_text):
     results = []
     
     for table_index, table in enumerate(tables):
-        print(f"\n🔹 Processando tabela {table_index + 1}...")
+        print(f"\n Processando tabela {table_index + 1}...")
         rows = table.find_all('tr')
         print(f"  Número de linhas na tabela: {len(rows)}")
 
         if len(rows) < 2:
-            print("  ⚠️ Tabela ignorada por ter menos de 2 linhas.")
+            print(" Tabela ignorada por ter menos de 2 linhas.")
             continue  
 
         header_cells = rows[1].find_all(['td', 'th'])
         headers = [cell.get_text(strip=True) for cell in header_cells]
-        print(f"  🏷️ Headers identificados: {headers}")
+        print(f"Headers identificados: {headers}")
 
         data = []
         expected_columns = len(headers) 
@@ -113,7 +121,7 @@ def extract_tables_from_xml(xml_text):
         for row_index, row in enumerate(rows[2:], start=1): 
             cells = row.find_all('td')
             row_data = [cell.get_text(strip=True) for cell in cells]
-            print(f"  🔹 Linha {row_index} extraída: {row_data}")
+            print(f"Linha {row_index} extraída: {row_data}")
 
             if len(row_data) < expected_columns:
                 row_data.extend([None] * (expected_columns - len(row_data)))
@@ -122,17 +130,18 @@ def extract_tables_from_xml(xml_text):
 
             data.append(row_data)
 
+
         if headers and data:
             try:
                 df = pd.DataFrame(data, columns=headers)
-                print(f"✅ DataFrame criado com sucesso para a tabela {table_index + 1}.")
+                print(f"DataFrame criado com sucesso para a tabela {table_index + 1}.")
                 results.append(df)
             except Exception as e:
-                print(f"❌ Erro ao criar DataFrame para a tabela {table_index + 1}: {e}")
+                print(f"Erro ao criar DataFrame para a tabela {table_index + 1}: {e}")
         else:
-            print(f"⚠️ Tabela {table_index + 1} ignorada por falta de headers ou dados.")
+            print(f"Tabela {table_index + 1} ignorada por falta de headers ou dados.")
 
-    print(f"\n📌 Extração concluída. Total de DataFrames criados: {len(results)}")
+    print(f"\nExtração concluída. Total de DataFrames criados: {len(results)}")
     print(f"cabeças dos dataframes: {[df.columns.tolist() for df in results]}")
     return results
 
@@ -208,10 +217,10 @@ def standardize_dataframe(df, portaria_info):
         r'MUNIC[IÍ]PIO': 'município',
         r'C[OÓ]D(\.|IGO)?\s*IBGE|IBGE': 'código IBGE',
         r'ENTIDADE|FUNDO|RAZÃO SOCIAL': 'nome do fundo',
-        r'CNPJ': 'CNPJ',
+        r'CNPJ |C[ÓO]D(\.|IGO)?\s CNPJ ': 'CNPJ',
         r'ESTABELECIMENTO|NOME FANTASIA|RAZÃO SOCIAL': 'nome do estabelecimento',
-        r'CNES|C[ÓO]D(\.|IGO)?\s CNES ': 'CNES',
-        r'CNPJ\s*DO\s*ESTABELECIMENTO': 'CNPJ do estabelecimento',
+        r'CNES| C[ÓO]D(\.|IGO)?\s CNES ': 'CNES',
+       # r'CNPJ\s*DO\s*ESTABELECIMENTO': 'CNPJ do estabelecimento',
         r'C[ÓO]D(\.|IGO)?\s*EMENDA': 'código da emenda parlamentar',
         r'VALOR\s*POR\s*EMENDA\s*\(R\$\)': 'valor por emenda',
         r'VALOR\s*POR\s*PARLAMENTAR\s*\(R\$\)': 'valor por parlamentar',
@@ -238,8 +247,9 @@ def standardize_dataframe(df, portaria_info):
 
     # Garantir colunas esperadas
     expected_columns = [
-        'UF', 'município', 'código IBGE', 'nome do fundo', 'CNPJ',
-        'nome do estabelecimento', 'código CNES', 'CNPJ',
+        'UF', 'município', 'código IBGE', 'nome do fundo', 'CNPJ do fundo',
+        'nome do estabelecimento', 'CNES',
+         # 'CNPJ do estabelecimento',
         'código da emenda parlamentar', 'valor por emenda', 'valor por parlamentar', 
         'valor', 'funcional programático', 'numero da proposta',
         'numero da portaria', 'data'

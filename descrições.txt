@@ -34,5 +34,11 @@ numero da proposta
 juntar numa tabela so - acrescentando uma coluna da portaria n x e coluna data
 
 
+uf - 2 letras
+cnes 7 digitos
+cnpj - 
+nome do fundo - string 
+
+
 
 

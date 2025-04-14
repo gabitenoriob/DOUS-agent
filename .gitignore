@@ -7,3 +7,10 @@ venv/
 *.egg-info/
 .env
 dados/
+dfs.csv
+*.csv
+*.xlsx
+*.xlsx
+*.xls
+*.xlsm
+*.txt

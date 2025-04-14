@@ -6,8 +6,8 @@ from flask import Flask, make_response, render_template, request, jsonify
 import spacy
 import re
 from send import execute_query
-from utils import clean_data, extract_info, build_query, extract_info_from_text, extract_portaria_info, extract_tables_from_xml, standardize_dataframe
-from llm import format_response, generate_query
+from utils import clean_data, extract_info, build_query, extract_info_from_text, extract_portaria_info, extract_portaria_info_nlp, extract_tables_from_xml, standardize_dataframe
+from llm import format_response, generate_query, process_portarias_with_llm
 
 
 app = Flask(__name__)
@@ -41,7 +41,15 @@ def extrair_portarias():
         print(f"Query executada: {query}")
 
         portarias = execute_query(query)
+        #criar um txt com tudo que foi retornado da query
+        with open('portarias.txt', 'w', encoding='utf-8') as f:
+            for portaria in portarias:
+                f.write(f"{portaria}\n")
+        print("Portarias extraídas com sucesso.")
         print(f"Portarias retornadas: {len(portarias) if portarias else 0}")
+
+        # if portarias:
+        #        process_portarias_with_llm(portarias) 
 
         if not portarias:
             print("Nenhuma portaria encontrada com os critérios especificados.")
@@ -55,8 +63,11 @@ def extrair_portarias():
             try:
                 texto_portaria = portaria[1]
                 portaria_info = extract_portaria_info(texto_portaria)
+                portaria_info_nlp = extract_portaria_info_nlp(texto_portaria)
 
                 print(f"Portaria {idx+1}: Nº {portaria_info['numero_portaria']} - Data: {portaria_info['data_portaria']}")
+                print(F"Portaria info nlp: {portaria_info_nlp}")
+                
 
                 tables = extract_tables_from_xml(texto_portaria)
                 print(f"Número de tabelas encontradas: {len(tables)}")
@@ -72,10 +83,10 @@ def extrair_portarias():
 
                         # Salvar cada iteração no CSV sem sobrescrever (append)
                         standardized_df.to_csv(csv_filename, mode='a', index=False, encoding='utf-8-sig', sep=';', header=not os.path.exists(csv_filename))
-                        standardized_df.to_excel(excel_filename, mode='a', index=False, sheet_name='Portarias', header=not os.path.exists(excel_filename))  
+                        standardized_df.to_excel(excel_filename, header=not os.path.exists(excel_filename))  
 
                         all_data.append(standardized_df)
-                        print(f"Tabela processada e adicionada: {standardized_df.head()}")
+                        #print(f"Tabela processada e adicionada: {standardized_df.head()}")
 
                     except Exception as e:
                         print(f"Erro ao processar tabela da portaria {idx + 1}: {str(e)}")
