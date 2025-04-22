@@ -6,8 +6,10 @@ from flask import Flask, make_response, render_template, request, jsonify
 import spacy
 import re
 from send import execute_query
-from utils import clean_data, extract_info, build_query, extract_info_from_text, extract_portaria_info, extract_portaria_info_nlp, extract_tables_from_xml, standardize_dataframe
-from llm import format_response, generate_query, process_portarias_with_llm
+from pln import corrigir_tabela_de_texto
+from utils import clean_data, extract_portaria_info, extract_tables_from_xml, standardize_dataframe
+from llm import format_response, generate_query
+from llm import llm_local
 
 
 app = Flask(__name__)
@@ -20,7 +22,7 @@ def index():
 @app.route('/extrair-portarias', methods=['GET'])
 def extrair_portarias():
     try:
-        print("Iniciando a função 'extrair-portarias'...")
+        print("Iniciando a função '/extrair-portarias'...")
 
         query = """
         SELECT id, texto, pubName, pubDate, artType, artCategory, Ementa
@@ -31,84 +33,81 @@ def extrair_portarias():
             (
                 texto LIKE '%incremento temporário%' OR
                 texto LIKE '%rateio dos recursos de transferência%' OR
-                texto LIKE '%emenda parlamentares%' OR
-                texto LIKE '%aplicaçã de emenda%' OR
-                texto LIKE '%atenção especializada a saúde%' OR
+                texto LIKE '%emendas parlamentares%' OR
+                texto LIKE '%aplicação de emenda%' OR
+                texto LIKE '%atenção especializada à saúde%' OR
                 texto LIKE '%relatório anual de gestão RAG%' OR
                 texto LIKE '%Bloco de Manutenção das Ações e Serviços Públicos de Saúde%'
             )
         """
-        print(f"Query executada: {query}")
-
+        print("Executando consulta SQL...")
         portarias = execute_query(query)
-        #criar um txt com tudo que foi retornado da query
+
+        print(f"Portarias retornadas: {len(portarias) if portarias else 0}")
+
         with open('portarias.txt', 'w', encoding='utf-8') as f:
             for portaria in portarias:
                 f.write(f"{portaria}\n")
-        print("Portarias extraídas com sucesso.")
-        print(f"Portarias retornadas: {len(portarias) if portarias else 0}")
-
-        # if portarias:
-        #        process_portarias_with_llm(portarias) 
+        print("Arquivo 'portarias.txt' criado com sucesso.")
 
         if not portarias:
-            print("Nenhuma portaria encontrada com os critérios especificados.")
             return jsonify({"message": "Nenhuma portaria encontrada com os critérios especificados"}), 404
 
         all_data = []
-        csv_filename = 'dfs.csv'
-        excel_filename = 'dfs.xlsx'
+        csv_filename = 'portarias.csv'
+        excel_filename = 'portarias.xlsx'
 
         for idx, portaria in enumerate(portarias):
             try:
+                print(f"\n🔍 Processando portaria {idx + 1} de {len(portarias)}...")
                 texto_portaria = portaria[1]
                 portaria_info = extract_portaria_info(texto_portaria)
-                portaria_info_nlp = extract_portaria_info_nlp(texto_portaria)
 
-                print(f"Portaria {idx+1}: Nº {portaria_info['numero_portaria']} - Data: {portaria_info['data_portaria']}")
-                print(F"Portaria info nlp: {portaria_info_nlp}")
-                
+                print(f"Portaria Nº {portaria_info.get('numero_portaria')} - Data: {portaria_info.get('data_portaria')}")
 
                 tables = extract_tables_from_xml(texto_portaria)
-                print(f"Número de tabelas encontradas: {len(tables)}")
+                print(f"Tabelas extraídas: {len(tables)}")
 
                 for table_df in tables:
                     try:
+                        # Etapa 1: padronizar
                         standardized_df = standardize_dataframe(table_df, portaria_info)
 
-                        if portaria_info['numero_portaria']:
-                            standardized_df['numero da portaria'] = portaria_info['numero_portaria']
-                        if portaria_info['data_portaria']:
-                            standardized_df['data'] = portaria_info['data_portaria']
+                        # Etapa 2: corrigir com LLM (se disponível)
+                        if llm_local:
+                            standardized_df = corrigir_tabela_de_texto(texto_portaria, llm_local)
 
-                        # Salvar cada iteração no CSV sem sobrescrever (append)
+                        # Adicionar metadados
+                        standardized_df['numero da portaria'] = portaria_info.get('numero_portaria', '')
+                        standardized_df['data'] = portaria_info.get('data_portaria', '')
+
+                        # Limpeza final
+                        standardized_df = clean_data(standardized_df)
+
+                        # Salvar CSV e Excel
                         standardized_df.to_csv(csv_filename, mode='a', index=False, encoding='utf-8-sig', sep=';', header=not os.path.exists(csv_filename))
-                        standardized_df.to_excel(excel_filename, header=not os.path.exists(excel_filename))  
+                        standardized_df.to_excel(excel_filename, index=False, header=not os.path.exists(excel_filename))
 
                         all_data.append(standardized_df)
-                        #print(f"Tabela processada e adicionada: {standardized_df.head()}")
 
                     except Exception as e:
-                        print(f"Erro ao processar tabela da portaria {idx + 1}: {str(e)}")
+                        print(f"⚠️ Erro ao processar tabela: {str(e)}")
                         continue
 
             except Exception as e:
-                print(f"Erro ao processar portaria {idx + 1}: {str(e)}")
+                print(f"⚠️ Erro ao processar portaria {idx + 1}: {str(e)}")
                 continue
 
         if not all_data:
             return jsonify({"message": "Nenhuma tabela válida encontrada"}), 404
 
-        # Unir todas as tabelas apenas se houver dados
-        if all_data:
-            final_df = pd.concat(all_data, ignore_index=True)
+        final_df = pd.concat(all_data, ignore_index=True)
+        final_df = clean_data(final_df)
 
-            final_df.to_csv('tabelas_unificadas.csv', index=False, encoding='utf-8-sig', sep=';')
-            final_df.to_excel('tabelas_unificadas.xlsx')
+        final_df.to_csv('tabelas_unificadas.csv', index=False, encoding='utf-8-sig', sep=';')
+        final_df.to_excel('tabelas_unificadas.xlsx', index=False)
 
-            print("Tabela unificada salva")
-        else:
-            print("Nenhuma tabela válida encontrada para unificação.")
+        print("\n✅ Tabela unificada salva com sucesso.")
 
         return jsonify({
             "data": final_df.to_dict(orient='records'),
@@ -117,8 +116,9 @@ def extrair_portarias():
         })
 
     except Exception as e:
-        print(f"Erro no endpoint: {str(e)}")
+        print(f"❌ Erro no endpoint '/extrair-portarias': {str(e)}")
         return jsonify({"error": str(e)}), 500
+
 
 
 @app.route('/ask', methods=['POST'])

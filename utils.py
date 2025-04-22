@@ -3,6 +3,7 @@ import re
 import pandas as pd
 from bs4 import BeautifulSoup
 import spacy
+from testes import validate_cnes, validate_cnpj, validate_cpf, validate_date, validate_ibge, validate_municipio, validate_name, validate_uf
 
 nlp = spacy.load("pt_core_news_sm")
 
@@ -209,7 +210,12 @@ def standardize_dataframe(df, portaria_info):
     """Padroniza o DataFrame para o formato desejado"""
     df = df.copy()
     print(f"DataFrame original:\n{df.head()}")
+    print("Colunas reais no CSV:", df.columns.tolist())
 
+    colunas = df.columns.tolist()
+    for col in colunas:
+        if re.search(r'\bCNPJ\b|\bC[ÓO]D[\. ]*CNPJ\b', col, re.IGNORECASE):
+            print(f"Caso detectado como CNPJ: {col}")
 
     # Mapeamento de colunas com regex para capturar variações
     column_mapping = {
@@ -217,10 +223,9 @@ def standardize_dataframe(df, portaria_info):
         r'MUNIC[IÍ]PIO': 'município',
         r'C[OÓ]D(\.|IGO)?\s*IBGE|IBGE': 'código IBGE',
         r'ENTIDADE|FUNDO|RAZÃO SOCIAL': 'nome do fundo',
-        r'CNPJ |C[ÓO]D(\.|IGO)?\s CNPJ ': 'CNPJ',
+       r'\bCNPJ\b|\bC[ÓO]D[\. ]*CNPJ\b': 'CNPJ',
         r'ESTABELECIMENTO|NOME FANTASIA|RAZÃO SOCIAL': 'nome do estabelecimento',
         r'CNES| C[ÓO]D(\.|IGO)?\s CNES ': 'CNES',
-       # r'CNPJ\s*DO\s*ESTABELECIMENTO': 'CNPJ do estabelecimento',
         r'C[ÓO]D(\.|IGO)?\s*EMENDA': 'código da emenda parlamentar',
         r'VALOR\s*POR\s*EMENDA\s*\(R\$\)': 'valor por emenda',
         r'VALOR\s*POR\s*PARLAMENTAR\s*\(R\$\)': 'valor por parlamentar',
@@ -247,9 +252,8 @@ def standardize_dataframe(df, portaria_info):
 
     # Garantir colunas esperadas
     expected_columns = [
-        'UF', 'município', 'código IBGE', 'nome do fundo', 'CNPJ do fundo',
+        'UF', 'município', 'código IBGE', 'nome do fundo', 'CNPJ',
         'nome do estabelecimento', 'CNES',
-         # 'CNPJ do estabelecimento',
         'código da emenda parlamentar', 'valor por emenda', 'valor por parlamentar', 
         'valor', 'funcional programático', 'numero da proposta',
         'numero da portaria', 'data'
@@ -259,6 +263,7 @@ def standardize_dataframe(df, portaria_info):
     for col in expected_columns:
         if col not in df.columns:
             df[col] = None  
+    print(f"DataFrame após adição de colunas:\n{df.head()}")
     
     if 'numero da portaria' not in df.columns or df['numero da portaria'].isnull().all():
         df['numero da portaria'] = portaria_info.get('numero_portaria')
@@ -266,14 +271,12 @@ def standardize_dataframe(df, portaria_info):
     if 'data' not in df.columns or df['data'].isnull().all():
         df['data'] = portaria_info.get('data_portaria')
     
-    #ta bom
-    print(f"DataFrame após adição de colunas:\n{df.head()}")
     print(f"df com colunas {df[expected_columns].head()}")
     return df[expected_columns]
 
 
 def clean_data(df):
-    """Limpa e padroniza os dados"""
+    """Limpa e padroniza os dados com verificações adicionais."""
     # Limpeza de valores monetários
     money_cols = ['valor', 'valor por emenda', 'valor por parlamentar']
     for col in money_cols:
@@ -281,7 +284,56 @@ def clean_data(df):
             df[col] = df[col].astype(str).str.replace(r'[R$\s.]', '', regex=True)
             df[col] = df[col].str.replace(',', '.').str.strip()
             df[col] = pd.to_numeric(df[col], errors='coerce')
+
+    # Validação de CNES (7 dígitos)
+    if 'CNES' in df.columns:
+        df['CNES_valid'] = df['CNES'].apply(validate_cnes)
+        print(f"CNES válido: {df['CNES_valid'].sum()} registros válidos.")
+
+    # Validação de Data
+    if 'data' in df.columns:
+        df['data_valid'] = df['data'].apply(validate_date)
+        print(f"Datas válidas: {df['data_valid'].sum()} registros válidos.")
+
+    # Validação de Nome (não numérico)
+    if 'nome do fundo' in df.columns:
+        df['nome_fundo_valid'] = df['nome do fundo'].apply(validate_name)
+        print(f"Nomos de fundo válidos: {df['nome_fundo_valid'].sum()} registros válidos.")
+
+    if 'CNPJ' in df.columns:
+        df['cnpj_valid'] = df['CNPJ'].apply(validate_cnpj)
+        print(f"CNPJ válidos: {df['cnpj_valid'].sum()} registros válidos.")
+
+    if 'numero da portaria' in df.columns:
+        df['numero_portaria_valid'] = df['numero da portaria'].apply(lambda x: x.isnumeric())
+        print(f"Números de portaria válidos: {df['numero_portaria_valid'].sum()} registros válidos.")
+
+    if 'município' in df.columns:
+        df['municipio_valid'] = df['município'].apply(validate_municipio)
+        print(f"Municípios válidos: {df['municipio_valid'].sum()} registros válidos.")
+    
+    if 'código IBGE' in df.columns:
+        df['codigo_ibge_valid'] = df['código IBGE'].apply(validate_ibge)
+        print(f"Códigos IBGE válidos: {df['codigo_ibge_valid'].sum()} registros válidos.")
+
+    if 'UF' in df.columns:
+        df['uf_valid'] = df['UF'].apply(validate_uf)
+        print(f"UF válidas: {df['uf_valid'].sum()} registros válidos.")
+
+    for col in df.columns:
+        if col.endswith('_valid'):
+            base_col = col.replace('_valid', '')
+            if base_col in df.columns:
+                df.loc[~df[col], base_col] = None
+
+    df.drop(columns=[col for col in df.columns if col.endswith('_valid')], inplace=True)
+
+    print(f"DataFrame após limpeza:\n{df.head()}")
+
+
+    # Retornando o DataFrame completo com as colunas de validação adicionadas
     return df
+
 
 def extract_info(user_input):
     """

@@ -8,6 +8,13 @@ import json
 from langchain.prompts import PromptTemplate
 from huggingface_hub import login
 import os
+import huggingface_hub
+
+from transformers import TapasTokenizer, TapasForQuestionAnswering
+import pandas as pd
+
+tokenizer = TapasTokenizer.from_pretrained("google/tapas-large-finetuned-wtq")
+model = TapasForQuestionAnswering.from_pretrained("google/tapas-large-finetuned-wtq")
 
 
 LM_STUDIO_URL = "http://10.2.3.63:1234/v1/completions"
@@ -126,47 +133,6 @@ def extract_table_using_llm(texto_portaria):
         print(f"Erro ao conectar ao LLM para extração de tabela: {e}")
         return None
 
-def process_portarias_with_llm(portarias):
-    """
-    Percorre as portarias e extrai tabelas via LLM.
-    Salva as tabelas extraídas em CSV/XLS unificado.
-    """
-    all_data = []
-    csv_filename = 'tabelas_unificadas.csv'
-    excel_filename = 'tabelas_unificadas.xlsx'
-
-    for idx, portaria in enumerate(portarias):
-        try:
-            texto_portaria = portaria[1]
-            tables_df = extract_table_using_llm(texto_portaria)
-
-            if tables_df is not None:
-                # Adiciona metadados da portaria no DF
-                tables_df['numero da portaria'] = portaria[0]  # ID da portaria
-                tables_df['data'] = portaria[3]  # Data da portaria
-
-                # Salvar no CSV e Excel sem sobrescrever
-                tables_df.to_csv(csv_filename, mode='a', index=False, encoding='utf-8-sig', sep=';', header=not os.path.exists(csv_filename))
-                with pd.ExcelWriter(excel_filename, mode='a', engine='openpyxl', if_sheet_exists='overlay') as writer:
-                    tables_df.to_excel(writer, sheet_name='Portarias', index=False, header=not os.path.exists(excel_filename))
-
-                all_data.append(tables_df)
-                print(f"Tabela extraída e adicionada: {tables_df.shape[0]} linhas")
-            else:
-                print(f"Nenhuma tabela válida extraída da portaria {idx + 1}")
-
-        except Exception as e:
-            print(f"Erro ao processar portaria {idx + 1}: {str(e)}")
-            continue
-
-    # Unir todas as tabelas se houver dados
-    if all_data:
-        final_df = pd.concat(all_data, ignore_index=True)
-        final_df.to_csv(csv_filename, index=False, encoding='utf-8-sig', sep=';')
-        final_df.to_excel(excel_filename, index=False)
-        print("Tabela unificada salva com sucesso.")
-    else:
-        print("Nenhuma tabela válida encontrada para unificação.")
 
 
 
